@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from redis_om import get_redis_connection, HashModel
 
@@ -46,4 +46,16 @@ def create(product: Product):
 
 @app.get('/products/{pk}')
 def get(pk: str):
-    return Product.get(pk)
+    try:
+        return Product.get(pk)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+@app.delete('/products/{pk}')
+def delete(pk: str):
+    try:
+        product = Product.get(pk)
+        product.delete(pk)
+        return {"message": "Product deleted successfully", "id": pk}
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Product not found")
