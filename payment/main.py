@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis_om import get_redis_connection, HashModel
 from starlette.requests import Request
 import requests
+import time
 
 app = FastAPI()
 
@@ -55,5 +56,6 @@ async def create(request: Request): # id, quantity
     return req.json()
 
 def order_completed(order: Order):
+    time.sleep(5)
     order.status = 'completed'
     order.save()
