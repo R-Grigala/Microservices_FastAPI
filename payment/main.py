@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.background import BackgroundTasks
 from redis_om import get_redis_connection, HashModel
 from starlette.requests import Request
 import requests
@@ -34,8 +35,12 @@ class Order(HashModel):
         database = redis
 
 
+@app.get('/orders/{pk}')
+def get(pk: str):
+    return Order.get(pk)
+
 @app.post('/orders')
-async def create(request: Request): # id, quantity
+async def create(request: Request, background_tasks: BackgroundTasks): # id, quantity
     body = await request.json()
 
     req = requests.get('http://localhost:8000/products/%s' % body['id'])
@@ -51,9 +56,10 @@ async def create(request: Request): # id, quantity
     )
     order.save()
 
-    order_completed(order)
+    background_tasks.add_task(order_completed, order)
 
-    return req.json()
+    return order
+
 
 def order_completed(order: Order):
     time.sleep(5)
